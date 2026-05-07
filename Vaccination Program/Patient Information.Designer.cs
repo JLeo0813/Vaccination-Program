@@ -28,35 +28,46 @@
         /// </summary>
         private void InitializeComponent()
         {
-            tableLayoutPanel1 = new TableLayoutPanel();
+            patient_information_GridView = new DataGridView();
+            querySelector_ComboBox = new ComboBox();
+            ((System.ComponentModel.ISupportInitialize)patient_information_GridView).BeginInit();
             SuspendLayout();
             // 
-            // tableLayoutPanel1
+            // patient_information_GridView
             // 
-            tableLayoutPanel1.ColumnCount = 2;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.Location = new Point(125, 82);
-            tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 2;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.Size = new Size(414, 214);
-            tableLayoutPanel1.TabIndex = 0;
+            patient_information_GridView.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            patient_information_GridView.Location = new Point(189, 111);
+            patient_information_GridView.Name = "patient_information_GridView";
+            patient_information_GridView.RowHeadersWidth = 51;
+            patient_information_GridView.Size = new Size(1200, 800);
+            patient_information_GridView.TabIndex = 1;
+            // 
+            // querySelector_ComboBox
+            // 
+            querySelector_ComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            querySelector_ComboBox.FormattingEnabled = true;
+            querySelector_ComboBox.Location = new Point(1489, 148);
+            querySelector_ComboBox.Name = "querySelector_ComboBox";
+            querySelector_ComboBox.Size = new Size(300, 28);
+            querySelector_ComboBox.TabIndex = 2;
             // 
             // Patient_Information
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1902, 1033);
-            Controls.Add(tableLayoutPanel1);
+            Controls.Add(querySelector_ComboBox);
+            Controls.Add(patient_information_GridView);
             Name = "Patient_Information";
             Text = "Patient_Information";
+            Load += Patient_Information_Load;
+            ((System.ComponentModel.ISupportInitialize)patient_information_GridView).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
 
-        private TableLayoutPanel tableLayoutPanel1;
+        private DataGridView patient_information_GridView;
+        private ComboBox querySelector_ComboBox;
     }
 }
