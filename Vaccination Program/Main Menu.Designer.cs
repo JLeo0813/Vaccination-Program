@@ -42,6 +42,7 @@
             btnRegistration.TabIndex = 0;
             btnRegistration.Text = "Patient Registration";
             btnRegistration.UseVisualStyleBackColor = true;
+            btnRegistration.Click += btnRegistration_Click;
             // 
             // btnInformation
             // 
@@ -51,6 +52,7 @@
             btnInformation.TabIndex = 1;
             btnInformation.Text = "Patient Information";
             btnInformation.UseVisualStyleBackColor = true;
+            btnInformation.Click += btnInformation_Click;
             // 
             // btnCalendar
             // 
@@ -60,6 +62,7 @@
             btnCalendar.TabIndex = 2;
             btnCalendar.Text = "Vaccination Calendar";
             btnCalendar.UseVisualStyleBackColor = true;
+            btnCalendar.Click += btnCalendar_Click;
             // 
             // btnScheduling
             // 
@@ -69,6 +72,7 @@
             btnScheduling.TabIndex = 3;
             btnScheduling.Text = "Vaccination Scheduling";
             btnScheduling.UseVisualStyleBackColor = true;
+            btnScheduling.Click += btnScheduling_Click;
             // 
             // Main_Menu
             // 

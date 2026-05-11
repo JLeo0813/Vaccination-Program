@@ -162,6 +162,7 @@ namespace Vaccination_Program
 
         private void ClearForm()
         {
+            // 1. Clear all text boxes
             txtChildLastName.Clear();
             txtChildFirstName.Clear();
             txtChildMI.Clear();
@@ -169,22 +170,30 @@ namespace Vaccination_Program
             txtMotherFirstName.Clear();
             txtMotherMI.Clear();
             txtAddress.Clear();
+
+            // 2. Reset combo box and birth date
             cmbSex.SelectedIndex = -1;
             dtpBirthDate.Value = DateTime.Now;
 
-            // Uncheck all date pickers
-            dtpBCG_Within.Checked = false; dtpBCG_After.Checked = false;
-            dtpHepB_Within.Checked = false; dtpHepB_After.Checked = false;
+            // 3. Uncheck all vaccine date pickers
+            dtpBCG_Within.Checked = false;
+            dtpBCG_After.Checked = false;
+
+            dtpHepB_Within.Checked = false;
+            dtpHepB_After.Checked = false;
+
             dtpDPT1.Checked = false; dtpDPT2.Checked = false; dtpDPT3.Checked = false;
             dtpOPV1.Checked = false; dtpOPV2.Checked = false; dtpOPV3.Checked = false;
             dtpPCV1.Checked = false; dtpPCV2.Checked = false; dtpPCV3.Checked = false;
             dtpIPV1.Checked = false; dtpIPV2.Checked = false;
             dtpMMR1.Checked = false; dtpMMR2.Checked = false;
+
+            this.ActiveControl = txtChildFirstName;
         }
 
         private void Patient_Registration_Load(object sender, EventArgs e)
         {
-
+            ClearForm();
         }
     }
 }
