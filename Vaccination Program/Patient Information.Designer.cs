@@ -30,6 +30,7 @@
         {
             patient_information_GridView = new DataGridView();
             querySelector_ComboBox = new ComboBox();
+            btnRefresh = new Button();
             ((System.ComponentModel.ISupportInitialize)patient_information_GridView).BeginInit();
             SuspendLayout();
             // 
@@ -51,11 +52,22 @@
             querySelector_ComboBox.Size = new Size(300, 28);
             querySelector_ComboBox.TabIndex = 2;
             // 
+            // btnRefresh
+            // 
+            btnRefresh.Location = new Point(1501, 829);
+            btnRefresh.Name = "btnRefresh";
+            btnRefresh.Size = new Size(189, 67);
+            btnRefresh.TabIndex = 3;
+            btnRefresh.Text = "Refresh";
+            btnRefresh.UseVisualStyleBackColor = true;
+            btnRefresh.Click += btnRefresh_Click;
+            // 
             // Patient_Information
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1902, 1033);
+            Controls.Add(btnRefresh);
             Controls.Add(querySelector_ComboBox);
             Controls.Add(patient_information_GridView);
             Name = "Patient_Information";
@@ -69,5 +81,6 @@
 
         private DataGridView patient_information_GridView;
         private ComboBox querySelector_ComboBox;
+        private Button btnRefresh;
     }
 }

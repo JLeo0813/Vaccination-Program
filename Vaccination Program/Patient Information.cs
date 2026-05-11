@@ -8,7 +8,7 @@ namespace Vaccination_Program
     public partial class Patient_Information : Form
     {
         // Update the connection string with your MySQL server credentials
-        private string connectionString = "Server=localhost;Database=child_immunization_db;Uid=root;Pwd=your_password;";
+        private string connectionString = "Server=localhost;Database=child_immunization_db;Uid=root;Pwd=08132003JLeo;";
 
         public Patient_Information()
         {
@@ -370,6 +370,15 @@ namespace Vaccination_Program
                 {
                     MessageBox.Show("Error loading data: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            // Check if an option is actually selected
+            if (querySelector_ComboBox.SelectedItem != null)
+            {
+                // Re-trigger the ComboBox event to fetch
             }
         }
     }

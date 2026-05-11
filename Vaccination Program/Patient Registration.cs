@@ -6,7 +6,7 @@ namespace Vaccination_Program
 {
     public partial class Patient_Registration : Form
     {
-        private string connectionString = "Server=localhost;Database=child_immunization_db;Uid=root;Pwd=your_password;";
+        private string connectionString = "Server=localhost;Database=child_immunization_db;Uid=root;Pwd=08132003JLeo;";
 
         public Patient_Registration()
         {
@@ -66,7 +66,8 @@ namespace Vaccination_Program
                                 cmdChild.Parameters.AddWithValue("@cFirst", txtChildFirstName.Text.Trim());
                                 cmdChild.Parameters.AddWithValue("@cMI", string.IsNullOrWhiteSpace(txtChildMI.Text) ? (object)DBNull.Value : txtChildMI.Text.Trim());
                                 cmdChild.Parameters.AddWithValue("@dob", dob.ToString("yyyy-MM-dd"));
-                                cmdChild.Parameters.AddWithValue("@sex", cmbSex.SelectedItem.ToString());
+                                string sexValue = cmbSex.SelectedItem.ToString().Substring(0, 1).ToUpper();
+                                cmdChild.Parameters.AddWithValue("@sex", sexValue);
                                 cmdChild.Parameters.AddWithValue("@address", txtAddress.Text.Trim());
                                 cmdChild.ExecuteNonQuery();
                                 childId = cmdChild.LastInsertedId;

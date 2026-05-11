@@ -682,12 +682,13 @@
             // 
             // btnSavePatient
             // 
-            btnSavePatient.Location = new Point(1716, 910);
+            btnSavePatient.Location = new Point(1721, 915);
             btnSavePatient.Name = "btnSavePatient";
             btnSavePatient.Size = new Size(114, 55);
             btnSavePatient.TabIndex = 5;
             btnSavePatient.Text = "Save";
             btnSavePatient.UseVisualStyleBackColor = true;
+            btnSavePatient.Click += btnSavePatient_Click;
             // 
             // Patient_Registration
             // 

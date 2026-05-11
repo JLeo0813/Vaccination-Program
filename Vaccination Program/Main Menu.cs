@@ -16,5 +16,10 @@ namespace Vaccination_Program
         {
             InitializeComponent();
         }
+
+        private void Main_Menu_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
