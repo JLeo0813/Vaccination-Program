@@ -29,43 +29,61 @@
         private void InitializeComponent()
         {
             monthCalendar1 = new MonthCalendar();
-            tableLayoutPanel1 = new TableLayoutPanel();
+            dgvSchedule = new DataGridView();
+            lblSelectedDate = new Label();
+            ((System.ComponentModel.ISupportInitialize)dgvSchedule).BeginInit();
             SuspendLayout();
             // 
             // monthCalendar1
             // 
             monthCalendar1.Location = new Point(97, 91);
+            monthCalendar1.MaxSelectionCount = 1;
             monthCalendar1.Name = "monthCalendar1";
             monthCalendar1.TabIndex = 0;
+            monthCalendar1.DateSelected += monthCalendar1_DateSelected;
             // 
-            // tableLayoutPanel1
+            // dgvSchedule
             // 
-            tableLayoutPanel1.ColumnCount = 2;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.Location = new Point(704, 107);
-            tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 2;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel1.Size = new Size(250, 125);
-            tableLayoutPanel1.TabIndex = 1;
+            dgvSchedule.AllowUserToAddRows = false;
+            dgvSchedule.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvSchedule.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvSchedule.Location = new Point(704, 91);
+            dgvSchedule.Name = "dgvSchedule";
+            dgvSchedule.ReadOnly = true;
+            dgvSchedule.RowHeadersWidth = 51;
+            dgvSchedule.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvSchedule.Size = new Size(300, 188);
+            dgvSchedule.TabIndex = 1;
+            // 
+            // lblSelectedDate
+            // 
+            lblSelectedDate.AutoSize = true;
+            lblSelectedDate.Location = new Point(704, 59);
+            lblSelectedDate.Name = "lblSelectedDate";
+            lblSelectedDate.Size = new Size(203, 20);
+            lblSelectedDate.TabIndex = 2;
+            lblSelectedDate.Text = "Schedules for: [Select a Date]";
             // 
             // Vaccination_Calendar
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1902, 1033);
-            Controls.Add(tableLayoutPanel1);
+            Controls.Add(lblSelectedDate);
+            Controls.Add(dgvSchedule);
             Controls.Add(monthCalendar1);
             Name = "Vaccination_Calendar";
             Text = "Vaccination_Calendar";
+            Load += Vaccination_Calendar_Load;
+            ((System.ComponentModel.ISupportInitialize)dgvSchedule).EndInit();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
         private MonthCalendar monthCalendar1;
-        private TableLayoutPanel tableLayoutPanel1;
+        private DataGridView dgvSchedule;
+        private Label lblSelectedDate;
     }
 }

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
+using System.Collections.Generic;
 
 namespace Vaccination_Program
 {
@@ -17,42 +18,86 @@ namespace Vaccination_Program
 
         private void Patient_Information_Load(object sender, EventArgs e)
         {
-            // Populate the ComboBox with all 15 display options
-            querySelector_ComboBox.Items.Add("1. All Mothers");
+            // The items have been reordered, making the Full Summary the default #1
+            querySelector_ComboBox.Items.Add("1. Full Vaccination Status Summary");
             querySelector_ComboBox.Items.Add("2. All Children");
-            querySelector_ComboBox.Items.Add("3. Children with Mother's Info");
-            querySelector_ComboBox.Items.Add("4. Maternal Td Vaccination");
-            querySelector_ComboBox.Items.Add("5. Children Protected at Birth (CPAB)");
-            querySelector_ComboBox.Items.Add("6. BCG Vaccination");
-            querySelector_ComboBox.Items.Add("7. Hepatitis B at Birth");
-            querySelector_ComboBox.Items.Add("8. DPT-HiB-HepB");
+            querySelector_ComboBox.Items.Add("3. All Mothers");
+            querySelector_ComboBox.Items.Add("4. Children with Mother's Info");
+            querySelector_ComboBox.Items.Add("5. Td - Tetanus-Diphtheria Vaccine");
+            querySelector_ComboBox.Items.Add("6. BCG - Bacille Calmette-Guerin Vaccine");
+            querySelector_ComboBox.Items.Add("7. Hepatitis B Vaccine");
+            querySelector_ComboBox.Items.Add("8. DPT-HiB-HepB Vaccine");
             querySelector_ComboBox.Items.Add("9. OPV - Oral Polio Vaccine");
             querySelector_ComboBox.Items.Add("10. IPV - Inactivated Polio Vaccine");
             querySelector_ComboBox.Items.Add("11. PCV - Pneumococcal Conjugate Vaccine");
             querySelector_ComboBox.Items.Add("12. MMR - Measles-Mumps-Rubella");
-            querySelector_ComboBox.Items.Add("13. FIC / CIC Annual Reporting");
-            querySelector_ComboBox.Items.Add("14. Full Vaccination Status Summary");
+            querySelector_ComboBox.Items.Add("13. Children Protected at Birth (CPAB)");
+            querySelector_ComboBox.Items.Add("14. FIC / CIC Annual Reporting");
             querySelector_ComboBox.Items.Add("15. Detailed Vaccination Status (All)");
 
-            // Select the first item by default to trigger the load
             querySelector_ComboBox.SelectedIndex = 0;
         }
 
         private void querySelector_ComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (querySelector_ComboBox.SelectedItem == null) return;
-
-            string selectedOption = querySelector_ComboBox.SelectedItem.ToString();
+            string selectedOption = querySelector_ComboBox.SelectedItem?.ToString() ?? "";
             string queryToExecute = "";
+
+            // Clear the search bar whenever the table category changes
+            txtSearch.Text = "";
 
             switch (selectedOption)
             {
-                case "1. All Mothers":
+                case "1. Full Vaccination Status Summary":
                     queryToExecute = @"
-                        SELECT mother_id, 
-                               CONCAT(last_name, ', ', first_name, IFNULL(CONCAT(' ', middle_initial, '.'), '')) AS mother_full_name
-                        FROM mothers
-                        ORDER BY last_name, first_name;";
+                        SELECT c.registration_no,
+                               CONCAT(c.last_name, ', ', c.first_name, IFNULL(CONCAT(' ', c.middle_initial, '.'), '')) AS child_full_name,
+                               c.date_of_birth, TIMESTAMPDIFF(MONTH, c.date_of_birth, CURDATE()) AS age_in_months, c.sex,
+                               CASE WHEN b.within_24hrs_date IS NOT NULL OR b.after_24hrs_date IS NOT NULL THEN 'Given' ELSE 'Pending' END AS bcg,
+                               CASE
+                                   WHEN hb.within_24hrs_date IS NOT NULL THEN 'Given <24hrs'
+                                   WHEN hb.after_24hrs_date IS NOT NULL THEN 'Given >24hrs'
+                                   ELSE 'Pending'
+                               END AS hepb_birth,
+                               CASE
+                                   WHEN dpt.dose3_date IS NOT NULL THEN 'Complete (3/3)'
+                                   WHEN dpt.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
+                                   WHEN dpt.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
+                                   ELSE 'Pending'
+                               END AS dpt_hib_hepb,
+                               CASE
+                                   WHEN opv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
+                                   WHEN opv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
+                                   WHEN opv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
+                                   ELSE 'Pending'
+                               END AS opv,
+                               CASE WHEN ipv.dose1_date IS NOT NULL THEN 'Given' ELSE 'Pending' END AS ipv,
+                               CASE
+                                   WHEN pcv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
+                                   WHEN pcv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
+                                   WHEN pcv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
+                                   ELSE 'Pending'
+                               END AS pcv,
+                               CASE
+                                   WHEN mmr.dose2_date IS NOT NULL THEN 'Complete (2/2)'
+                                   WHEN mmr.dose1_date IS NOT NULL THEN 'Incomplete (1/2)'
+                                   ELSE 'Pending'
+                               END AS mmr,
+                               CASE WHEN cp.protected_at_birth = 1 THEN 'Protected' ELSE 'Not Protected' END AS cpab,
+                               CASE WHEN (ist.fic_bcg AND ist.fic_dpt3 AND ist.fic_opv3 AND ist.fic_mmr2) THEN 'Yes' ELSE 'No' END AS is_fic,
+                               CASE WHEN (ist.cic_bcg AND ist.cic_dpt3 AND ist.cic_opv3 AND ist.cic_mmr2) THEN 'Yes' ELSE 'No' END AS is_cic,
+                               ist.remarks
+                        FROM children c
+                        LEFT JOIN vacc_bcg b ON c.child_id = b.child_id
+                        LEFT JOIN vacc_hepb_birth hb ON c.child_id = hb.child_id
+                        LEFT JOIN vacc_dpt_hib_hepb dpt ON c.child_id = dpt.child_id
+                        LEFT JOIN vacc_opv opv ON c.child_id = opv.child_id
+                        LEFT JOIN vacc_ipv ipv ON c.child_id = ipv.child_id
+                        LEFT JOIN vacc_pcv pcv ON c.child_id = pcv.child_id
+                        LEFT JOIN vacc_mmr mmr ON c.child_id = mmr.child_id
+                        LEFT JOIN cpab cp ON c.child_id = cp.child_id
+                        LEFT JOIN immunization_status ist ON c.child_id = ist.child_id
+                        ORDER BY c.last_name, c.first_name;";
                     break;
 
                 case "2. All Children":
@@ -64,7 +109,15 @@ namespace Vaccination_Program
                         ORDER BY last_name, first_name;";
                     break;
 
-                case "3. Children with Mother's Info":
+                case "3. All Mothers":
+                    queryToExecute = @"
+                        SELECT mother_id, 
+                               CONCAT(last_name, ', ', first_name, IFNULL(CONCAT(' ', middle_initial, '.'), '')) AS mother_full_name
+                        FROM mothers
+                        ORDER BY last_name, first_name;";
+                    break;
+
+                case "4. Children with Mother's Info":
                     queryToExecute = @"
                         SELECT c.registration_no, c.family_serial_no,
                                CONCAT(c.last_name, ', ', c.first_name, IFNULL(CONCAT(' ', c.middle_initial, '.'), '')) AS child_full_name,
@@ -72,11 +125,11 @@ namespace Vaccination_Program
                                c.sex, c.complete_address,
                                CONCAT(m.last_name, ', ', m.first_name, IFNULL(CONCAT(' ', m.middle_initial, '.'), '')) AS mother_full_name
                         FROM children c
-                        JOIN mothers m ON c.mother_id = m.mother_id
+                        LEFT JOIN mothers m ON c.mother_id = m.mother_id
                         ORDER BY c.last_name, c.first_name;";
                     break;
 
-                case "4. Maternal Td Vaccination":
+                case "5. Td - Tetanus-Diphtheria Vaccine":
                     queryToExecute = @"
                         SELECT c.registration_no,
                                CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
@@ -88,19 +141,7 @@ namespace Vaccination_Program
                         ORDER BY c.last_name, c.first_name;";
                     break;
 
-                case "5. Children Protected at Birth (CPAB)":
-                    queryToExecute = @"
-                        SELECT c.registration_no,
-                               CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
-                               CONCAT(m.last_name, ', ', m.first_name) AS mother_full_name,
-                               CASE WHEN cp.protected_at_birth = 1 THEN 'Protected' ELSE 'Not Protected' END AS cpab_status
-                        FROM cpab cp
-                        JOIN children c ON cp.child_id = c.child_id
-                        JOIN mothers m ON c.mother_id = m.mother_id
-                        ORDER BY c.last_name, c.first_name;";
-                    break;
-
-                case "6. BCG Vaccination":
+                case "6. BCG - Bacille Calmette-Guerin Vaccine":
                     queryToExecute = @"
                         SELECT c.registration_no,
                                CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
@@ -116,7 +157,7 @@ namespace Vaccination_Program
                         ORDER BY c.last_name, c.first_name;";
                     break;
 
-                case "7. Hepatitis B at Birth":
+                case "7. Hepatitis B Vaccine":
                     queryToExecute = @"
                         SELECT c.registration_no,
                                CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
@@ -132,7 +173,7 @@ namespace Vaccination_Program
                         ORDER BY c.last_name, c.first_name;";
                     break;
 
-                case "8. DPT-HiB-HepB":
+                case "8. DPT-HiB-HepB Vaccine":
                     queryToExecute = @"
                         SELECT c.registration_no,
                                CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
@@ -218,7 +259,19 @@ namespace Vaccination_Program
                         ORDER BY c.last_name, c.first_name;";
                     break;
 
-                case "13. FIC / CIC Annual Reporting":
+                case "13. Children Protected at Birth (CPAB)":
+                    queryToExecute = @"
+                        SELECT c.registration_no,
+                               CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
+                               CONCAT(m.last_name, ', ', m.first_name) AS mother_full_name,
+                               CASE WHEN cp.protected_at_birth = 1 THEN 'Protected' ELSE 'Not Protected' END AS cpab_status
+                        FROM cpab cp
+                        JOIN children c ON cp.child_id = c.child_id
+                        JOIN mothers m ON c.mother_id = m.mother_id
+                        ORDER BY c.last_name, c.first_name;";
+                    break;
+
+                case "14. FIC / CIC Annual Reporting":
                     queryToExecute = @"
                         SELECT c.registration_no,
                                CONCAT(c.last_name, ', ', c.first_name) AS child_full_name,
@@ -232,58 +285,6 @@ namespace Vaccination_Program
                                ist.remarks
                         FROM immunization_status ist
                         JOIN children c ON ist.child_id = c.child_id
-                        ORDER BY c.last_name, c.first_name;";
-                    break;
-
-                case "14. Full Vaccination Status Summary":
-                    queryToExecute = @"
-                        SELECT c.registration_no,
-                               CONCAT(c.last_name, ', ', c.first_name, IFNULL(CONCAT(' ', c.middle_initial, '.'), '')) AS child_full_name,
-                               c.date_of_birth, TIMESTAMPDIFF(MONTH, c.date_of_birth, CURDATE()) AS age_in_months, c.sex,
-                               CASE WHEN b.within_24hrs_date IS NOT NULL OR b.after_24hrs_date IS NOT NULL THEN 'Given' ELSE 'Pending' END AS bcg,
-                               CASE
-                                   WHEN hb.within_24hrs_date IS NOT NULL THEN 'Given <24hrs'
-                                   WHEN hb.after_24hrs_date IS NOT NULL THEN 'Given >24hrs'
-                                   ELSE 'Pending'
-                               END AS hepb_birth,
-                               CASE
-                                   WHEN dpt.dose3_date IS NOT NULL THEN 'Complete (3/3)'
-                                   WHEN dpt.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
-                                   WHEN dpt.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
-                                   ELSE 'Pending'
-                               END AS dpt_hib_hepb,
-                               CASE
-                                   WHEN opv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
-                                   WHEN opv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
-                                   WHEN opv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
-                                   ELSE 'Pending'
-                               END AS opv,
-                               CASE WHEN ipv.dose1_date IS NOT NULL THEN 'Given' ELSE 'Pending' END AS ipv,
-                               CASE
-                                   WHEN pcv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
-                                   WHEN pcv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
-                                   WHEN pcv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
-                                   ELSE 'Pending'
-                               END AS pcv,
-                               CASE
-                                   WHEN mmr.dose2_date IS NOT NULL THEN 'Complete (2/2)'
-                                   WHEN mmr.dose1_date IS NOT NULL THEN 'Incomplete (1/2)'
-                                   ELSE 'Pending'
-                               END AS mmr,
-                               CASE WHEN cp.protected_at_birth = 1 THEN 'Protected' ELSE 'Not Protected' END AS cpab,
-                               CASE WHEN (ist.fic_bcg AND ist.fic_dpt3 AND ist.fic_opv3 AND ist.fic_mmr2) THEN 'Yes' ELSE 'No' END AS is_fic,
-                               CASE WHEN (ist.cic_bcg AND ist.cic_dpt3 AND ist.cic_opv3 AND ist.cic_mmr2) THEN 'Yes' ELSE 'No' END AS is_cic,
-                               ist.remarks
-                        FROM children c
-                        LEFT JOIN vacc_bcg b ON c.child_id = b.child_id
-                        LEFT JOIN vacc_hepb_birth hb ON c.child_id = hb.child_id
-                        LEFT JOIN vacc_dpt_hib_hepb dpt ON c.child_id = dpt.child_id
-                        LEFT JOIN vacc_opv opv ON c.child_id = opv.child_id
-                        LEFT JOIN vacc_ipv ipv ON c.child_id = ipv.child_id
-                        LEFT JOIN vacc_pcv pcv ON c.child_id = pcv.child_id
-                        LEFT JOIN vacc_mmr mmr ON c.child_id = mmr.child_id
-                        LEFT JOIN cpab cp ON c.child_id = cp.child_id
-                        LEFT JOIN immunization_status ist ON c.child_id = ist.child_id
                         ORDER BY c.last_name, c.first_name;";
                     break;
 
@@ -315,16 +316,16 @@ namespace Vaccination_Program
                                CASE WHEN (ist.cic_bcg AND ist.cic_dpt3 AND ist.cic_opv3 AND ist.cic_mmr2) THEN 'Yes' ELSE 'No' END AS is_cic,
                                ist.remarks
                         FROM children c
-                        LEFT JOIN mothers             m   ON c.mother_id  = m.mother_id
-                        LEFT JOIN vacc_bcg            b   ON c.child_id   = b.child_id
-                        LEFT JOIN vacc_hepb_birth     hb  ON c.child_id   = hb.child_id
-                        LEFT JOIN vacc_dpt_hib_hepb   dpt ON c.child_id   = dpt.child_id
-                        LEFT JOIN vacc_opv            opv ON c.child_id   = opv.child_id
-                        LEFT JOIN vacc_ipv            ipv ON c.child_id   = ipv.child_id
-                        LEFT JOIN vacc_pcv            pcv ON c.child_id   = pcv.child_id
-                        LEFT JOIN vacc_mmr            mmr ON c.child_id   = mmr.child_id
-                        LEFT JOIN cpab                cp  ON c.child_id   = cp.child_id
-                        LEFT JOIN immunization_status ist ON c.child_id   = ist.child_id
+                        LEFT JOIN mothers m ON c.mother_id = m.mother_id
+                        LEFT JOIN vacc_bcg b ON c.child_id = b.child_id
+                        LEFT JOIN vacc_hepb_birth hb ON c.child_id = hb.child_id
+                        LEFT JOIN vacc_dpt_hib_hepb dpt ON c.child_id = dpt.child_id
+                        LEFT JOIN vacc_opv opv ON c.child_id = opv.child_id
+                        LEFT JOIN vacc_ipv ipv ON c.child_id = ipv.child_id
+                        LEFT JOIN vacc_pcv pcv ON c.child_id = pcv.child_id
+                        LEFT JOIN vacc_mmr mmr ON c.child_id = mmr.child_id
+                        LEFT JOIN cpab cp ON c.child_id = cp.child_id
+                        LEFT JOIN immunization_status ist ON c.child_id = ist.child_id
                         ORDER BY c.last_name, c.first_name;";
                     break;
             }
@@ -349,15 +350,17 @@ namespace Vaccination_Program
                             DataTable dataTable = new DataTable();
                             adapter.Fill(dataTable);
 
+                            // Clear any broken mapping before binding new data
+                            patient_information_GridView.DataSource = null;
+                            patient_information_GridView.AutoGenerateColumns = true;
+
                             patient_information_GridView.DataSource = dataTable;
 
-                            // Formatting
                             patient_information_GridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                             patient_information_GridView.ReadOnly = true;
                             patient_information_GridView.AllowUserToAddRows = false;
                             patient_information_GridView.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.LightGray;
 
-                            // Stretch wide text columns if they are present in the current query
                             if (patient_information_GridView.Columns["complete_address"] != null)
                                 patient_information_GridView.Columns["complete_address"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
@@ -375,10 +378,140 @@ namespace Vaccination_Program
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-            // Check if an option is actually selected
             if (querySelector_ComboBox.SelectedItem != null)
             {
-                // Re-trigger the ComboBox event to fetch
+                querySelector_ComboBox_SelectedIndexChanged(sender, e);
+            }
+            else
+            {
+                querySelector_ComboBox.SelectedIndex = 0;
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            // 1. Verify a row is selected
+            if (patient_information_GridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a patient row to delete.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 2. Ensure we can grab the Registration Number
+            if (!patient_information_GridView.Columns.Contains("registration_no"))
+            {
+                MessageBox.Show("Please switch to a view that contains the Registration Number to delete.", "Invalid View", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string regNoStr = patient_information_GridView.SelectedRows[0].Cells["registration_no"].Value?.ToString() ?? "";
+            if (string.IsNullOrEmpty(regNoStr)) return;
+
+            // 3. Display the Warning Confirmation
+            DialogResult result = MessageBox.Show(
+                $"Are you sure you want to PERMANENTLY delete the patient with Registration No: {regNoStr}?\n\nThis action cannot be undone and will erase all associated vaccination records.",
+                "Confirm Permanent Deletion",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2); // Defaults the cursor to 'No' for safety
+
+            // 4. Delete if confirmed
+            if (result == DialogResult.Yes)
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    try
+                    {
+                        conn.Open();
+                        // Because your DB uses ON DELETE CASCADE, deleting the child automatically deletes all their vaccine records!
+                        using (MySqlCommand cmd = new MySqlCommand("DELETE FROM children WHERE registration_no = @regNo", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@regNo", regNoStr);
+                            cmd.ExecuteNonQuery();
+                        }
+                        MessageBox.Show("Patient deleted successfully.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // Refresh the table
+                        btnRefresh_Click(sender, e);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Error deleting record: " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void btnEdit_Click(object sender, EventArgs e)
+        {
+            if (patient_information_GridView.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a patient row to edit.", "No Selection", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!patient_information_GridView.Columns.Contains("registration_no"))
+            {
+                MessageBox.Show("Please switch to a view that contains the Registration Number to edit.", "Invalid View", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string regNoStr = patient_information_GridView.SelectedRows[0].Cells["registration_no"].Value?.ToString() ?? "";
+
+            // Open the Registration form in "Edit Mode" by passing the Registration Number
+            Patient_Registration editForm = new Patient_Registration(regNoStr);
+            editForm.ShowDialog(); // Use ShowDialog so the program waits for the edit to finish
+
+            // Refresh the table automatically after the edit form closes
+            btnRefresh_Click(sender, e);
+        }
+
+        // --- SEARCH BAR LOGIC ---
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            // Verify that the GridView is holding a loaded DataTable
+            if (patient_information_GridView.DataSource is DataTable dt)
+            {
+                // Grab what the user typed, and safely escape single quotes to prevent crashes
+                string keyword = txtSearch.Text.Trim().Replace("'", "''");
+
+                // If the user erased the search, clear the filter and show all rows
+                if (string.IsNullOrEmpty(keyword))
+                {
+                    dt.DefaultView.RowFilter = string.Empty;
+                    return;
+                }
+
+                // Build a dynamic search filter based on which columns currently exist in the view
+                List<string> filters = new List<string>();
+
+                // Search by Registration Number (converting the integer to string temporarily to allow partial match)
+                if (dt.Columns.Contains("registration_no"))
+                {
+                    filters.Add($"Convert(registration_no, 'System.String') LIKE '%{keyword}%'");
+                }
+
+                // Search by Child Name
+                if (dt.Columns.Contains("child_full_name"))
+                {
+                    filters.Add($"child_full_name LIKE '%{keyword}%'");
+                }
+
+                // Search by Mother Name (in case they are looking at the Mothers-only table)
+                if (dt.Columns.Contains("mother_full_name"))
+                {
+                    filters.Add($"mother_full_name LIKE '%{keyword}%'");
+                }
+
+                // Apply the filters if any searchable columns exist
+                if (filters.Count > 0)
+                {
+                    dt.DefaultView.RowFilter = string.Join(" OR ", filters);
+                }
+                else
+                {
+                    dt.DefaultView.RowFilter = "1 = 0"; // Hide rows if the view doesn't support searching
+                }
             }
         }
     }
