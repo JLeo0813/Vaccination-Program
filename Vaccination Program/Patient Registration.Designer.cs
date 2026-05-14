@@ -40,6 +40,7 @@
             label2 = new Label();
             label3 = new Label();
             groupBox2 = new GroupBox();
+            chkProtectedAtBirth = new CheckBox();
             txtAddress = new TextBox();
             txtMotherMI = new TextBox();
             txtMotherFirstName = new TextBox();
@@ -91,6 +92,8 @@
             dtpOPV1 = new DateTimePicker();
             label6 = new Label();
             btnSavePatient = new Button();
+            label34 = new Label();
+            txtRemarks = new TextBox();
             groupBox1.SuspendLayout();
             groupBox2.SuspendLayout();
             groupBox3.SuspendLayout();
@@ -199,6 +202,7 @@
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(chkProtectedAtBirth);
             groupBox2.Controls.Add(txtAddress);
             groupBox2.Controls.Add(txtMotherMI);
             groupBox2.Controls.Add(txtMotherFirstName);
@@ -209,10 +213,20 @@
             groupBox2.Controls.Add(label10);
             groupBox2.Location = new Point(97, 417);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new Size(626, 305);
+            groupBox2.Size = new Size(626, 416);
             groupBox2.TabIndex = 2;
             groupBox2.TabStop = false;
             groupBox2.Text = "Mother Information";
+            // 
+            // chkProtectedAtBirth
+            // 
+            chkProtectedAtBirth.AutoSize = true;
+            chkProtectedAtBirth.Location = new Point(67, 305);
+            chkProtectedAtBirth.Name = "chkProtectedAtBirth";
+            chkProtectedAtBirth.Size = new Size(415, 24);
+            chkProtectedAtBirth.TabIndex = 10;
+            chkProtectedAtBirth.Text = "Mother received adequate Td vaccines (Protected at Birth)";
+            chkProtectedAtBirth.UseVisualStyleBackColor = true;
             // 
             // txtAddress
             // 
@@ -323,7 +337,7 @@
             groupBox3.Controls.Add(label6);
             groupBox3.Location = new Point(776, 25);
             groupBox3.Name = "groupBox3";
-            groupBox3.Size = new Size(871, 955);
+            groupBox3.Size = new Size(686, 955);
             groupBox3.TabIndex = 4;
             groupBox3.TabStop = false;
             groupBox3.Text = "Completed Vaccines";
@@ -331,7 +345,7 @@
             // label31
             // 
             label31.AutoSize = true;
-            label31.Location = new Point(501, 777);
+            label31.Location = new Point(387, 777);
             label31.Name = "label31";
             label31.Size = new Size(99, 20);
             label31.TabIndex = 50;
@@ -339,7 +353,7 @@
             // 
             // dtpMMR2
             // 
-            dtpMMR2.Location = new Point(501, 810);
+            dtpMMR2.Location = new Point(387, 810);
             dtpMMR2.Name = "dtpMMR2";
             dtpMMR2.ShowCheckBox = true;
             dtpMMR2.Size = new Size(263, 27);
@@ -348,7 +362,7 @@
             // label32
             // 
             label32.AutoSize = true;
-            label32.Location = new Point(501, 697);
+            label32.Location = new Point(387, 697);
             label32.Name = "label32";
             label32.Size = new Size(77, 20);
             label32.TabIndex = 48;
@@ -356,7 +370,7 @@
             // 
             // dtpMMR1
             // 
-            dtpMMR1.Location = new Point(501, 730);
+            dtpMMR1.Location = new Point(387, 730);
             dtpMMR1.Name = "dtpMMR1";
             dtpMMR1.ShowCheckBox = true;
             dtpMMR1.Size = new Size(263, 27);
@@ -365,7 +379,7 @@
             // label33
             // 
             label33.AutoSize = true;
-            label33.Location = new Point(501, 677);
+            label33.Location = new Point(387, 677);
             label33.Name = "label33";
             label33.Size = new Size(44, 20);
             label33.TabIndex = 46;
@@ -374,7 +388,7 @@
             // label28
             // 
             label28.AutoSize = true;
-            label28.Location = new Point(501, 502);
+            label28.Location = new Point(387, 502);
             label28.Name = "label28";
             label28.Size = new Size(99, 20);
             label28.TabIndex = 45;
@@ -382,7 +396,7 @@
             // 
             // dtpIPV2
             // 
-            dtpIPV2.Location = new Point(501, 535);
+            dtpIPV2.Location = new Point(387, 535);
             dtpIPV2.Name = "dtpIPV2";
             dtpIPV2.ShowCheckBox = true;
             dtpIPV2.Size = new Size(263, 27);
@@ -391,7 +405,7 @@
             // label29
             // 
             label29.AutoSize = true;
-            label29.Location = new Point(501, 422);
+            label29.Location = new Point(387, 422);
             label29.Name = "label29";
             label29.Size = new Size(77, 20);
             label29.TabIndex = 43;
@@ -399,7 +413,7 @@
             // 
             // dtpIPV1
             // 
-            dtpIPV1.Location = new Point(501, 455);
+            dtpIPV1.Location = new Point(387, 455);
             dtpIPV1.Name = "dtpIPV1";
             dtpIPV1.ShowCheckBox = true;
             dtpIPV1.Size = new Size(263, 27);
@@ -408,7 +422,7 @@
             // label30
             // 
             label30.AutoSize = true;
-            label30.Location = new Point(501, 402);
+            label30.Location = new Point(387, 402);
             label30.Name = "label30";
             label30.Size = new Size(30, 20);
             label30.TabIndex = 41;
@@ -417,7 +431,7 @@
             // label24
             // 
             label24.AutoSize = true;
-            label24.Location = new Point(501, 203);
+            label24.Location = new Point(387, 203);
             label24.Name = "label24";
             label24.Size = new Size(84, 20);
             label24.TabIndex = 40;
@@ -425,7 +439,7 @@
             // 
             // dtpPCV3
             // 
-            dtpPCV3.Location = new Point(501, 236);
+            dtpPCV3.Location = new Point(387, 236);
             dtpPCV3.Name = "dtpPCV3";
             dtpPCV3.ShowCheckBox = true;
             dtpPCV3.Size = new Size(263, 27);
@@ -434,7 +448,7 @@
             // label25
             // 
             label25.AutoSize = true;
-            label25.Location = new Point(501, 123);
+            label25.Location = new Point(387, 123);
             label25.Name = "label25";
             label25.Size = new Size(99, 20);
             label25.TabIndex = 38;
@@ -442,7 +456,7 @@
             // 
             // dtpPCV2
             // 
-            dtpPCV2.Location = new Point(501, 156);
+            dtpPCV2.Location = new Point(387, 156);
             dtpPCV2.Name = "dtpPCV2";
             dtpPCV2.ShowCheckBox = true;
             dtpPCV2.Size = new Size(263, 27);
@@ -451,7 +465,7 @@
             // label26
             // 
             label26.AutoSize = true;
-            label26.Location = new Point(501, 43);
+            label26.Location = new Point(387, 43);
             label26.Name = "label26";
             label26.Size = new Size(77, 20);
             label26.TabIndex = 36;
@@ -459,7 +473,7 @@
             // 
             // dtpPCV1
             // 
-            dtpPCV1.Location = new Point(501, 76);
+            dtpPCV1.Location = new Point(387, 76);
             dtpPCV1.Name = "dtpPCV1";
             dtpPCV1.ShowCheckBox = true;
             dtpPCV1.Size = new Size(263, 27);
@@ -468,7 +482,7 @@
             // label27
             // 
             label27.AutoSize = true;
-            label27.Location = new Point(501, 23);
+            label27.Location = new Point(387, 23);
             label27.Name = "label27";
             label27.Size = new Size(35, 20);
             label27.TabIndex = 34;
@@ -690,11 +704,30 @@
             btnSavePatient.UseVisualStyleBackColor = true;
             btnSavePatient.Click += btnSavePatient_Click;
             // 
+            // label34
+            // 
+            label34.AutoSize = true;
+            label34.Location = new Point(1516, 48);
+            label34.Name = "label34";
+            label34.Size = new Size(68, 20);
+            label34.TabIndex = 6;
+            label34.Text = "Remarks:";
+            // 
+            // txtRemarks
+            // 
+            txtRemarks.Location = new Point(1516, 88);
+            txtRemarks.Multiline = true;
+            txtRemarks.Name = "txtRemarks";
+            txtRemarks.Size = new Size(272, 34);
+            txtRemarks.TabIndex = 11;
+            // 
             // Patient_Registration
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1902, 1033);
+            Controls.Add(txtRemarks);
+            Controls.Add(label34);
             Controls.Add(btnSavePatient);
             Controls.Add(groupBox3);
             Controls.Add(groupBox2);
@@ -709,6 +742,7 @@
             groupBox3.ResumeLayout(false);
             groupBox3.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -776,5 +810,8 @@
         private Label label32;
         private DateTimePicker dtpMMR1;
         private Label label33;
+        private CheckBox chkProtectedAtBirth;
+        private Label label34;
+        private TextBox txtRemarks;
     }
 }

@@ -18,7 +18,6 @@ namespace Vaccination_Program
 
         private void Patient_Information_Load(object sender, EventArgs e)
         {
-            // The items have been reordered, making the Full Summary the default #1
             querySelector_ComboBox.Items.Add("1. Full Vaccination Status Summary");
             querySelector_ComboBox.Items.Add("2. All Children");
             querySelector_ComboBox.Items.Add("3. All Mothers");
@@ -51,42 +50,46 @@ namespace Vaccination_Program
                 case "1. Full Vaccination Status Summary":
                     queryToExecute = @"
                         SELECT c.registration_no,
-                               CONCAT(c.last_name, ', ', c.first_name, IFNULL(CONCAT(' ', c.middle_initial, '.'), '')) AS child_full_name,
-                               c.date_of_birth, TIMESTAMPDIFF(MONTH, c.date_of_birth, CURDATE()) AS age_in_months, c.sex,
-                               CASE WHEN b.within_24hrs_date IS NOT NULL OR b.after_24hrs_date IS NOT NULL THEN 'Given' ELSE 'Pending' END AS bcg,
-                               CASE
-                                   WHEN hb.within_24hrs_date IS NOT NULL THEN 'Given <24hrs'
-                                   WHEN hb.after_24hrs_date IS NOT NULL THEN 'Given >24hrs'
-                                   ELSE 'Pending'
-                               END AS hepb_birth,
-                               CASE
-                                   WHEN dpt.dose3_date IS NOT NULL THEN 'Complete (3/3)'
-                                   WHEN dpt.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
-                                   WHEN dpt.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
-                                   ELSE 'Pending'
-                               END AS dpt_hib_hepb,
-                               CASE
-                                   WHEN opv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
-                                   WHEN opv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
-                                   WHEN opv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
-                                   ELSE 'Pending'
-                               END AS opv,
-                               CASE WHEN ipv.dose1_date IS NOT NULL THEN 'Given' ELSE 'Pending' END AS ipv,
-                               CASE
-                                   WHEN pcv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
-                                   WHEN pcv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
-                                   WHEN pcv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
-                                   ELSE 'Pending'
-                               END AS pcv,
-                               CASE
-                                   WHEN mmr.dose2_date IS NOT NULL THEN 'Complete (2/2)'
-                                   WHEN mmr.dose1_date IS NOT NULL THEN 'Incomplete (1/2)'
-                                   ELSE 'Pending'
-                               END AS mmr,
-                               CASE WHEN cp.protected_at_birth = 1 THEN 'Protected' ELSE 'Not Protected' END AS cpab,
-                               CASE WHEN (ist.fic_bcg AND ist.fic_dpt3 AND ist.fic_opv3 AND ist.fic_mmr2) THEN 'Yes' ELSE 'No' END AS is_fic,
-                               CASE WHEN (ist.cic_bcg AND ist.cic_dpt3 AND ist.cic_opv3 AND ist.cic_mmr2) THEN 'Yes' ELSE 'No' END AS is_cic,
-                               ist.remarks
+                            CONCAT(c.last_name, ', ', c.first_name, IFNULL(CONCAT(' ', c.middle_initial, '.'), '')) AS child_full_name,
+                            c.date_of_birth, TIMESTAMPDIFF(MONTH, c.date_of_birth, CURDATE()) AS age_in_months, c.sex,
+                            CASE WHEN b.within_24hrs_date IS NOT NULL OR b.after_24hrs_date IS NOT NULL THEN 'Complete' ELSE 'Pending' END AS bcg,
+                            CASE
+                                WHEN hb.within_24hrs_date IS NOT NULL THEN 'Complete (<24hrs)'
+                                WHEN hb.after_24hrs_date IS NOT NULL THEN 'Complete (>24hrs)'
+                                ELSE 'Pending'
+                            END AS hepb_birth,
+                            CASE
+                                WHEN dpt.dose3_date IS NOT NULL THEN 'Complete (3/3)'
+                                WHEN dpt.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
+                                WHEN dpt.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
+                                ELSE 'Pending'
+                            END AS dpt_hib_hepb,
+                            CASE
+                                WHEN opv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
+                                WHEN opv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
+                                WHEN opv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
+                                ELSE 'Pending'
+                            END AS opv,
+                            CASE 
+                                WHEN ipv.dose2_date IS NOT NULL THEN 'Complete (2/2)'
+                                WHEN ipv.dose1_date IS NOT NULL THEN 'Incomplete (1/2)'
+                                ELSE 'Pending' 
+                            END AS ipv,
+                            CASE
+                                WHEN pcv.dose3_date IS NOT NULL THEN 'Complete (3/3)'
+                                WHEN pcv.dose2_date IS NOT NULL THEN 'Incomplete (2/3)'
+                                WHEN pcv.dose1_date IS NOT NULL THEN 'Incomplete (1/3)'
+                                ELSE 'Pending'
+                            END AS pcv,
+                            CASE
+                                WHEN mmr.dose2_date IS NOT NULL THEN 'Complete (2/2)'
+                                WHEN mmr.dose1_date IS NOT NULL THEN 'Incomplete (1/2)'
+                                ELSE 'Pending'
+                            END AS mmr,
+                                CASE WHEN cp.protected_at_birth = 1 THEN 'Protected' ELSE 'Not Protected' END AS cpab,
+                                CASE WHEN (ist.fic_bcg AND ist.fic_dpt3 AND ist.fic_opv3 AND ist.fic_mmr2) THEN 'Yes' ELSE 'No' END AS is_fic,
+                                CASE WHEN (ist.cic_bcg AND ist.cic_dpt3 AND ist.cic_opv3 AND ist.cic_mmr2) THEN 'Yes' ELSE 'No' END AS is_cic,
+                                ist.remarks
                         FROM children c
                         LEFT JOIN vacc_bcg b ON c.child_id = b.child_id
                         LEFT JOIN vacc_hepb_birth hb ON c.child_id = hb.child_id
@@ -356,16 +359,38 @@ namespace Vaccination_Program
 
                             patient_information_GridView.DataSource = dataTable;
 
+                            // --- UPDATED GRID FORMATTING ---
+
+                            // 1. Enable Text Wrapping so long names or addresses stack neatly instead of getting cut off
+                            patient_information_GridView.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+                            patient_information_GridView.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+
+                            // 2. Base auto-sizing (calculates width based on the cell text and headers)
                             patient_information_GridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+
+                            // 3. Enforce a Minimum Width to prevent ANY column from squishing into unreadability
+                            foreach (DataGridViewColumn col in patient_information_GridView.Columns)
+                            {
+                                col.MinimumWidth = 80; // Sets a safe baseline of 80 pixels wide for every column
+                            }
+
+                            // 4. Safely handle wide text columns (Address and Remarks)
+                            if (patient_information_GridView.Columns["complete_address"] != null)
+                            {
+                                patient_information_GridView.Columns["complete_address"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                                patient_information_GridView.Columns["complete_address"].Width = 250;
+                            }
+
+                            if (patient_information_GridView.Columns["remarks"] != null)
+                            {
+                                patient_information_GridView.Columns["remarks"].AutoSizeMode = DataGridViewAutoSizeColumnMode.None;
+                                patient_information_GridView.Columns["remarks"].Width = 250;
+                            }
+
+                            // 5. Standard UI protections
                             patient_information_GridView.ReadOnly = true;
                             patient_information_GridView.AllowUserToAddRows = false;
                             patient_information_GridView.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.LightGray;
-
-                            if (patient_information_GridView.Columns["complete_address"] != null)
-                                patient_information_GridView.Columns["complete_address"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-
-                            if (patient_information_GridView.Columns["remarks"] != null)
-                                patient_information_GridView.Columns["remarks"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                         }
                     }
                 }

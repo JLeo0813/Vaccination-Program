@@ -51,7 +51,7 @@ namespace Vaccination_Program
                         {
                             long motherId, childId;
                             long regNoToUse;
-
+                            DateTime dob = dtpBirthDate.Value.Date;
 
                             // Editing an Existing Patient
 
@@ -119,7 +119,6 @@ namespace Vaccination_Program
                                 }
 
                                 // 3. Insert Child
-                                DateTime dob = dtpBirthDate.Value.Date;
                                 string insertChildQuery = @"
                             INSERT INTO children (registration_no, date_of_registration, mother_id, last_name, first_name, middle_initial, date_of_birth, sex, complete_address) 
                             VALUES (@regNo, CURDATE(), @motherId, @cLast, @cFirst, @cMI, @dob, @sex, @address);";
@@ -139,22 +138,25 @@ namespace Vaccination_Program
                                 }
 
                                 // 4. Baseline Status
-                                using (MySqlCommand cmdStatus = new MySqlCommand("INSERT INTO immunization_status (child_id) VALUES (@childId);", connection, transaction))
+                                using (MySqlCommand cmdStatus = new MySqlCommand("INSERT INTO immunization_status (child_id, remarks) VALUES (@childId, @remarks);", connection, transaction))
                                 {
                                     cmdStatus.Parameters.AddWithValue("@childId", childId);
+                                    // If the box is empty, save NULL. If it has text, trim the extra spaces and save it.
+                                    cmdStatus.Parameters.AddWithValue("@remarks", string.IsNullOrWhiteSpace(txtRemarks.Text) ? (object)DBNull.Value : txtRemarks.Text.Trim());
                                     cmdStatus.ExecuteNonQuery();
                                 }
                             }
 
-                            // SHARED LOGIC: Process Vaccines For Both
-                            InsertExplicitBirthVaccine(connection, transaction, childId, "vacc_bcg", dtpBCG_Within, dtpBCG_After);
-                            InsertExplicitBirthVaccine(connection, transaction, childId, "vacc_hepb_birth", dtpHepB_Within, dtpHepB_After);
+                            // SHARED LOGIC: PROCESS VACCINES FOR BOTH
 
-                            InsertMultiDoseVaccine(connection, transaction, childId, "vacc_dpt_hib_hepb", dtpDPT1, dtpDPT2, dtpDPT3);
-                            InsertMultiDoseVaccine(connection, transaction, childId, "vacc_opv", dtpOPV1, dtpOPV2, dtpOPV3);
-                            InsertMultiDoseVaccine(connection, transaction, childId, "vacc_pcv", dtpPCV1, dtpPCV2, dtpPCV3);
-                            InsertMultiDoseVaccine(connection, transaction, childId, "vacc_ipv", dtpIPV1, dtpIPV2, null);
-                            InsertMultiDoseVaccine(connection, transaction, childId, "vacc_mmr", dtpMMR1, dtpMMR2, null);
+                            InsertExplicitBirthVaccine(connection, transaction, childId, dob, "vacc_bcg", dtpBCG_Within, dtpBCG_After);
+                            InsertExplicitBirthVaccine(connection, transaction, childId, dob, "vacc_hepb_birth", dtpHepB_Within, dtpHepB_After);
+
+                            InsertMultiDoseVaccine(connection, transaction, childId, dob, "vacc_dpt_hib_hepb", dtpDPT1, dtpDPT2, dtpDPT3);
+                            InsertMultiDoseVaccine(connection, transaction, childId, dob, "vacc_opv", dtpOPV1, dtpOPV2, dtpOPV3);
+                            InsertMultiDoseVaccine(connection, transaction, childId, dob, "vacc_pcv", dtpPCV1, dtpPCV2, dtpPCV3);
+                            InsertMultiDoseVaccine(connection, transaction, childId, dob, "vacc_ipv", dtpIPV1, dtpIPV2, null);
+                            InsertMultiDoseVaccine(connection, transaction, childId, dob, "vacc_mmr", dtpMMR1, dtpMMR2, null);
 
                             // Commit the transaction to save everything
                             transaction.Commit();
@@ -190,50 +192,115 @@ namespace Vaccination_Program
         // --- HELPER METHODS ---
 
         // Helper for Separated Birth Vaccines (BCG, HepB)
-        private void InsertExplicitBirthVaccine(MySqlConnection conn, MySqlTransaction trans, long childId, string tableName, DateTimePicker dtpWithin, DateTimePicker dtpAfter)
+        private void InsertExplicitBirthVaccine(MySqlConnection conn, MySqlTransaction trans, long childId, DateTime dob, string tableName, DateTimePicker dtpWithin, DateTimePicker dtpAfter)
         {
-            // If neither is checked, skip inserting
             if (!dtpWithin.Checked && !dtpAfter.Checked) return;
 
             string query = $"INSERT INTO {tableName} (child_id";
             string values = "VALUES (@childId";
 
-            if (dtpWithin.Checked) { query += ", within_24hrs_date"; values += ", @d1"; }
-            if (dtpAfter.Checked) { query += ", after_24hrs_date"; values += ", @d2"; }
+            // We now add the age columns to the query!
+            if (dtpWithin.Checked) { query += ", within_24hrs_date, within_24hrs_age"; values += ", @d1, @a1"; }
+            if (dtpAfter.Checked) { query += ", after_24hrs_date, after_24hrs_age"; values += ", @d2, @a2"; }
 
             query += ") " + values + ");";
 
             using (MySqlCommand cmd = new MySqlCommand(query, conn, trans))
             {
                 cmd.Parameters.AddWithValue("@childId", childId);
-                if (dtpWithin.Checked) cmd.Parameters.AddWithValue("@d1", dtpWithin.Value.Date.ToString("yyyy-MM-dd"));
-                if (dtpAfter.Checked) cmd.Parameters.AddWithValue("@d2", dtpAfter.Value.Date.ToString("yyyy-MM-dd"));
+                if (dtpWithin.Checked)
+                {
+                    cmd.Parameters.AddWithValue("@d1", dtpWithin.Value.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@a1", CalculateAge(dob, dtpWithin.Value.Date)); // Calculates the age
+                }
+                if (dtpAfter.Checked)
+                {
+                    cmd.Parameters.AddWithValue("@d2", dtpAfter.Value.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@a2", CalculateAge(dob, dtpAfter.Value.Date)); // Calculates the age
+                }
 
                 cmd.ExecuteNonQuery();
             }
         }
 
         // Helper for Multi-Dose Vaccines
-        private void InsertMultiDoseVaccine(MySqlConnection conn, MySqlTransaction trans, long childId, string tableName, DateTimePicker dtp1, DateTimePicker dtp2, DateTimePicker? dtp3)
+        private void InsertMultiDoseVaccine(MySqlConnection conn, MySqlTransaction trans, long childId, DateTime dob, string tableName, DateTimePicker dtp1, DateTimePicker dtp2, DateTimePicker? dtp3)
         {
             if (!dtp1.Checked && !dtp2.Checked && (dtp3 == null || !dtp3.Checked)) return;
 
             string query = $"INSERT INTO {tableName} (child_id";
             string values = "VALUES (@childId";
 
-            if (dtp1.Checked) { query += ", dose1_date"; values += ", @d1"; }
-            if (dtp2.Checked) { query += ", dose2_date"; values += ", @d2"; }
-            if (dtp3 != null && dtp3.Checked) { query += ", dose3_date"; values += ", @d3"; }
+            // We now add the age columns to the query!
+            if (dtp1.Checked) { query += ", dose1_date, dose1_age"; values += ", @d1, @a1"; }
+            if (dtp2.Checked) { query += ", dose2_date, dose2_age"; values += ", @d2, @a2"; }
+            if (dtp3 != null && dtp3.Checked) { query += ", dose3_date, dose3_age"; values += ", @d3, @a3"; }
 
             query += ") " + values + ");";
 
             using (MySqlCommand cmd = new MySqlCommand(query, conn, trans))
             {
                 cmd.Parameters.AddWithValue("@childId", childId);
-                if (dtp1.Checked) cmd.Parameters.AddWithValue("@d1", dtp1.Value.Date.ToString("yyyy-MM-dd"));
-                if (dtp2.Checked) cmd.Parameters.AddWithValue("@d2", dtp2.Value.Date.ToString("yyyy-MM-dd"));
-                if (dtp3 != null && dtp3.Checked) cmd.Parameters.AddWithValue("@d3", dtp3.Value.Date.ToString("yyyy-MM-dd"));
+                if (dtp1.Checked)
+                {
+                    cmd.Parameters.AddWithValue("@d1", dtp1.Value.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@a1", CalculateAge(dob, dtp1.Value.Date)); // Calculates the age
+                }
+                if (dtp2.Checked)
+                {
+                    cmd.Parameters.AddWithValue("@d2", dtp2.Value.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@a2", CalculateAge(dob, dtp2.Value.Date)); // Calculates the age
+                }
+                if (dtp3 != null && dtp3.Checked)
+                {
+                    cmd.Parameters.AddWithValue("@d3", dtp3.Value.Date.ToString("yyyy-MM-dd"));
+                    cmd.Parameters.AddWithValue("@a3", CalculateAge(dob, dtp3.Value.Date)); // Calculates the age
+                }
 
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        // Helper to evaluate and update the CPAB (Protected at Birth) status
+        private void UpdateCpabStatus(MySqlConnection conn, MySqlTransaction trans, long childId)
+        {
+            // Uses an UPSERT: Inserts a new record if it doesn't exist, or updates it if it does
+            string query = @"
+        INSERT INTO cpab (child_id, protected_at_birth) 
+        VALUES (@cId, @cpab) 
+        ON DUPLICATE KEY UPDATE protected_at_birth = @cpab;";
+
+            using (MySqlCommand cmd = new MySqlCommand(query, conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@cId", childId);
+                cmd.Parameters.AddWithValue("@cpab", chkProtectedAtBirth.Checked ? 1 : 0);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        // Helper to automatically evaluate FIC/CIC status AND save Remarks
+        private void EvaluateImmunizationStatus(MySqlConnection conn, MySqlTransaction trans, long childId)
+        {
+            bool hasBcg = dtpBCG_Within.Checked || dtpBCG_After.Checked;
+            bool hasDpt3 = dtpDPT3.Checked;
+            bool hasOpv3 = dtpOPV3.Checked;
+            bool hasMmr2 = dtpMMR2.Checked;
+
+            string query = @"
+        UPDATE immunization_status 
+        SET fic_bcg = @bcg, fic_dpt3 = @dpt3, fic_opv3 = @opv3, fic_mmr2 = @mmr2,
+            cic_bcg = @bcg, cic_dpt3 = @dpt3, cic_opv3 = @opv3, cic_mmr2 = @mmr2,
+            remarks = @remarks
+        WHERE child_id = @cId;";
+
+            using (MySqlCommand cmd = new MySqlCommand(query, conn, trans))
+            {
+                cmd.Parameters.AddWithValue("@cId", childId);
+                cmd.Parameters.AddWithValue("@bcg", hasBcg ? 1 : 0);
+                cmd.Parameters.AddWithValue("@dpt3", hasDpt3 ? 1 : 0);
+                cmd.Parameters.AddWithValue("@opv3", hasOpv3 ? 1 : 0);
+                cmd.Parameters.AddWithValue("@mmr2", hasMmr2 ? 1 : 0);
+                cmd.Parameters.AddWithValue("@remarks", string.IsNullOrWhiteSpace(txtRemarks.Text) ? (object)DBNull.Value : txtRemarks.Text.Trim());
                 cmd.ExecuteNonQuery();
             }
         }
@@ -248,12 +315,14 @@ namespace Vaccination_Program
             txtMotherFirstName.Clear();
             txtMotherMI.Clear();
             txtAddress.Clear();
+            txtRemarks.Clear();
 
             // 2. Reset combo box and birth date
             cmbSex.SelectedIndex = -1;
             dtpBirthDate.Value = DateTime.Now;
 
             // 3. Uncheck all vaccine date pickers
+            chkProtectedAtBirth.Checked = false;
             dtpBCG_Within.Checked = false;
             dtpBCG_After.Checked = false;
 
@@ -291,6 +360,18 @@ namespace Vaccination_Program
             }
         }
 
+        private string CalculateAge(DateTime dob, DateTime vaccDate)
+        {
+            int days = (vaccDate.Date - dob.Date).Days;
+
+            if (days < 0) return "Invalid"; // Prevents negative ages if dates are entered wrong
+            if (days == 0) return "At Birth";
+            if (days < 7) return days + " days";
+            if (days < 30) return (days / 7) + " wks";
+
+            int months = (int)(days / 30.436875);
+            return months + " mos";
+        }
         private void LoadPatientDataForEdit()
         {
             using (MySqlConnection conn = new MySqlConnection(connectionString))
@@ -333,9 +414,29 @@ namespace Vaccination_Program
                         }
                     }
 
-                    // 2. Fetch Existing Vaccine Dates
+                    // 2. Fetch Existing Vaccine Dates and CPAB Status
                     if (editChildId > 0)
                     {
+                        //Fetch CPAB Status
+                        string cpabQuery = "SELECT protected_at_birth FROM cpab WHERE child_id = @cId";
+                        using (MySqlCommand cmdCpab = new MySqlCommand(cpabQuery, conn))
+                        {
+                            cmdCpab.Parameters.AddWithValue("@cId", editChildId);
+                            object cpabResult = cmdCpab.ExecuteScalar();
+                            // If a record exists and equals 1, check the box. Otherwise, leave it unchecked.
+                            chkProtectedAtBirth.Checked = (cpabResult != null && Convert.ToInt32(cpabResult) == 1);
+                        }
+
+                        // --- Fetch Remarks ---
+                        string remarksQuery = "SELECT remarks FROM immunization_status WHERE child_id = @cId";
+                        using (MySqlCommand cmdRemarks = new MySqlCommand(remarksQuery, conn))
+                        {
+                            cmdRemarks.Parameters.AddWithValue("@cId", editChildId);
+                            object remarksResult = cmdRemarks.ExecuteScalar();
+                            txtRemarks.Text = remarksResult?.ToString() ?? "";
+                        }
+
+                        // --- Fetch Existing Vaccine Dates ---
                         string vaccQuery = @"
                     SELECT
                         b.within_24hrs_date AS bcg_w, b.after_24hrs_date AS bcg_a,
@@ -402,4 +503,4 @@ namespace Vaccination_Program
             }
         }
     }
-        }
+    }

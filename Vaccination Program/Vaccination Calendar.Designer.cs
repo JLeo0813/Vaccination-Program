@@ -52,7 +52,7 @@
             dgvSchedule.ReadOnly = true;
             dgvSchedule.RowHeadersWidth = 51;
             dgvSchedule.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvSchedule.Size = new Size(300, 188);
+            dgvSchedule.Size = new Size(631, 249);
             dgvSchedule.TabIndex = 1;
             // 
             // lblSelectedDate
